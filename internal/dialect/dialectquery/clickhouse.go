@@ -1,21 +1,53 @@
 package dialectquery
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
-type Clickhouse struct{}
+type Clickhouse struct {
+	ClusterName string
+}
 
 var _ Querier = (*Clickhouse)(nil)
 
 func (c *Clickhouse) CreateTable(tableName string) string {
-	q := `CREATE TABLE IF NOT EXISTS %s (
+	if c.ClusterName != "" {
+		var dbName string
+		split := strings.SplitN(tableName, ".", 2)
+		if len(split) != 2 {
+			dbName = "default"
+		} else {
+			dbName = split[0]
+			tableName = split[1]
+		}
+
+		fullTableName := fmt.Sprintf("%s.%s", dbName, tableName)
+		const localPostfix = "_local_v1"
+
+		return `CREATE TABLE IF NOT EXISTS ` + fullTableName + localPostfix + ` ON CLUSTER '` + c.ClusterName + `' (
 		version_id Int64,
 		is_applied UInt8,
 		date Date default now(),
 		tstamp DateTime default now()
-	  )
+		)
+		ENGINE = ReplicatedMergeTree('
+		/clickhouse/{installation}/{cluster}/tables/{shard}/` + dbName + `/` + tableName + localPostfix + `', '{replica}')
+		ORDER BY (date);
+
+		CREATE TABLE IF NOT EXISTS ` + fullTableName + ` ON CLUSTER '` + c.ClusterName + `' AS ` + fullTableName + localPostfix + `
+		ENGINE = Distributed('` + c.ClusterName + `', ` + dbName + `, '` + tableName + localPostfix + `', rand());
+		ORDER BY (date);		`
+	}
+
+	return fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
+			version_id Int64,
+			is_applied UInt8,
+			date Date default now(),
+			tstamp DateTime default now()
+			)
 	  ENGINE = MergeTree()
-		ORDER BY (date)`
-	return fmt.Sprintf(q, tableName)
+		ORDER BY (date)`, tableName)
 }
 
 func (c *Clickhouse) InsertVersion(tableName string) string {
