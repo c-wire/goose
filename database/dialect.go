@@ -31,6 +31,11 @@ var (
 	ClickhouseStore = &dialectquery.Clickhouse{}
 )
 
+// SetClickhouseClusterName sets the cluster name for the Clickhouse dialect. ugly hack.
+func SetClickhouseClusterName(clusterName string) {
+	ClickhouseStore.ClusterName = clusterName
+}
+
 // NewStore returns a new [Store] implementation for the given dialect.
 func NewStore(dialect Dialect, tablename string) (Store, error) {
 	if tablename == "" {

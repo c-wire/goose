@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pressly/goose/v3/database"
 	"github.com/pressly/goose/v3/internal/dialect/dialectquery"
 )
 
@@ -63,7 +64,7 @@ func NewStore(d Dialect) (Store, error) {
 	case Tidb:
 		querier = &dialectquery.Tidb{}
 	case Clickhouse:
-		querier = &dialectquery.Clickhouse{}
+		querier = database.ClickhouseStore
 	case Vertica:
 		querier = &dialectquery.Vertica{}
 	case Ydb:
