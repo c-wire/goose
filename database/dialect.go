@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/pressly/goose/v3/internal/dialect/dialectquery"
 )
@@ -26,6 +27,10 @@ const (
 	DialectStarrocks  Dialect = "starrocks"
 )
 
+var (
+	ClickhouseStore = &dialectquery.Clickhouse{}
+)
+
 // NewStore returns a new [Store] implementation for the given dialect.
 func NewStore(dialect Dialect, tablename string) (Store, error) {
 	if tablename == "" {
@@ -35,7 +40,7 @@ func NewStore(dialect Dialect, tablename string) (Store, error) {
 		return nil, errors.New("dialect must not be empty")
 	}
 	lookup := map[Dialect]dialectquery.Querier{
-		DialectClickHouse: &dialectquery.Clickhouse{},
+		DialectClickHouse: ClickhouseStore,
 		DialectMSSQL:      &dialectquery.Sqlserver{},
 		DialectMySQL:      &dialectquery.Mysql{},
 		DialectPostgres:   &dialectquery.Postgres{},
@@ -69,9 +74,15 @@ func (s *store) Tablename() string {
 }
 
 func (s *store) CreateVersionTable(ctx context.Context, db DBTxConn) error {
-	q := s.querier.CreateTable(s.tablename)
-	if _, err := db.ExecContext(ctx, q); err != nil {
-		return fmt.Errorf("failed to create version table %q: %w", s.tablename, err)
+	queries := strings.Split(s.querier.CreateTable(s.tablename), ";")
+	for _, q := range queries {
+		q = strings.TrimSpace(q)
+		if q == "" {
+			continue
+		}
+		if _, err := db.ExecContext(ctx, q); err != nil {
+			return err
+		}
 	}
 	return nil
 }
