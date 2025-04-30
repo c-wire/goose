@@ -27,6 +27,10 @@ const (
 	DialectStarrocks  Dialect = "starrocks"
 )
 
+var (
+	ClickhouseStore = &dialectquery.Clickhouse{}
+)
+
 // NewStore returns a new [Store] implementation for the given dialect.
 func NewStore(dialect Dialect, tablename string) (Store, error) {
 	if tablename == "" {
@@ -36,19 +40,17 @@ func NewStore(dialect Dialect, tablename string) (Store, error) {
 		return nil, errors.New("dialect must not be empty")
 	}
 	lookup := map[Dialect]dialectquery.Querier{
-		DialectClickHouse: &dialectquery.Clickhouse{
-			ClusterName: "prod01",
-		},
-		DialectMSSQL:     &dialectquery.Sqlserver{},
-		DialectMySQL:     &dialectquery.Mysql{},
-		DialectPostgres:  &dialectquery.Postgres{},
-		DialectRedshift:  &dialectquery.Redshift{},
-		DialectSQLite3:   &dialectquery.Sqlite3{},
-		DialectTiDB:      &dialectquery.Tidb{},
-		DialectVertica:   &dialectquery.Vertica{},
-		DialectYdB:       &dialectquery.Ydb{},
-		DialectTurso:     &dialectquery.Turso{},
-		DialectStarrocks: &dialectquery.Starrocks{},
+		DialectClickHouse: ClickhouseStore,
+		DialectMSSQL:      &dialectquery.Sqlserver{},
+		DialectMySQL:      &dialectquery.Mysql{},
+		DialectPostgres:   &dialectquery.Postgres{},
+		DialectRedshift:   &dialectquery.Redshift{},
+		DialectSQLite3:    &dialectquery.Sqlite3{},
+		DialectTiDB:       &dialectquery.Tidb{},
+		DialectVertica:    &dialectquery.Vertica{},
+		DialectYdB:        &dialectquery.Ydb{},
+		DialectTurso:      &dialectquery.Turso{},
+		DialectStarrocks:  &dialectquery.Starrocks{},
 	}
 	querier, ok := lookup[dialect]
 	if !ok {
