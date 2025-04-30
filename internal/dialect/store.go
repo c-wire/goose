@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pressly/goose/v3/internal/dialect/dialectquery"
@@ -94,9 +95,17 @@ type store struct {
 var _ Store = (*store)(nil)
 
 func (s *store) CreateVersionTable(ctx context.Context, tx *sql.Tx, tableName string) error {
-	q := s.querier.CreateTable(tableName)
-	_, err := tx.ExecContext(ctx, q)
-	return err
+	queries := strings.Split(s.querier.CreateTable(tableName), ";")
+	for _, q := range queries {
+		q = strings.TrimSpace(q)
+		if q == "" {
+			continue
+		}
+		if _, err := tx.ExecContext(ctx, q); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *store) InsertVersion(ctx context.Context, tx *sql.Tx, tableName string, version int64) error {
