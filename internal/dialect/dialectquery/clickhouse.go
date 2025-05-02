@@ -26,18 +26,17 @@ func (c *Clickhouse) CreateTable(tableName string) string {
 		const localPostfix = "_local_v1"
 
 		return `CREATE TABLE IF NOT EXISTS ` + fullTableName + localPostfix + ` ON CLUSTER '` + c.ClusterName + `' (
-		version_id Int64,
-		is_applied UInt8,
-		date Date default now(),
-		tstamp DateTime default now()
-		)
-		ENGINE = ReplicatedMergeTree('
-		/clickhouse/{installation}/{cluster}/tables/{shard}/` + dbName + `/` + tableName + localPostfix + `', '{replica}')
-		ORDER BY (date);
+version_id Int64,
+is_applied UInt8,
+date Date default now(),
+tstamp DateTime default now()
+)
+ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard}/` + dbName + `/` + tableName + localPostfix + `', '{replica}')
+ORDER BY (date);
 
-		CREATE TABLE IF NOT EXISTS ` + fullTableName + ` ON CLUSTER '` + c.ClusterName + `' AS ` + fullTableName + localPostfix + `
-		ENGINE = Distributed('` + c.ClusterName + `', ` + dbName + `, '` + tableName + localPostfix + `', rand());
-		ORDER BY (date);		`
+CREATE TABLE IF NOT EXISTS ` + fullTableName + ` ON CLUSTER '` + c.ClusterName + `' AS ` + fullTableName + localPostfix + `
+ENGINE = Distributed('` + c.ClusterName + `', ` + dbName + `, '` + tableName + localPostfix + `', rand());
+ORDER BY (date);`
 	}
 
 	return fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
