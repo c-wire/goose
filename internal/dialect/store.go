@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -102,7 +103,11 @@ func (s *store) CreateVersionTable(ctx context.Context, tx *sql.Tx, tableName st
 		if q == "" {
 			continue
 		}
+
+		log.Println("Creating version table:", q)
+
 		if _, err := tx.ExecContext(ctx, q); err != nil {
+			log.Println("Error creating version table:", err)
 			return err
 		}
 	}

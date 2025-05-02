@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/pressly/goose/v3/internal/dialect/dialectquery"
@@ -85,7 +86,11 @@ func (s *store) CreateVersionTable(ctx context.Context, db DBTxConn) error {
 		if q == "" {
 			continue
 		}
+
+		log.Println("Creating version table:", q)
+
 		if _, err := db.ExecContext(ctx, q); err != nil {
+			log.Printf("Failed to create version table: %v", err)
 			return err
 		}
 	}
