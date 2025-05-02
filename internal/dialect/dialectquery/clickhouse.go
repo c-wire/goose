@@ -35,8 +35,7 @@ ENGINE = ReplicatedMergeTree('/clickhouse/{installation}/{cluster}/tables/{shard
 ORDER BY (date);
 
 CREATE TABLE IF NOT EXISTS ` + fullTableName + ` ON CLUSTER '` + c.ClusterName + `' AS ` + fullTableName + localPostfix + `
-ENGINE = Distributed('` + c.ClusterName + `', ` + dbName + `, '` + tableName + localPostfix + `', rand());
-ORDER BY (date);`
+ENGINE = Distributed('` + c.ClusterName + `', ` + dbName + `, '` + tableName + localPostfix + `', rand());`
 	}
 
 	return fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
